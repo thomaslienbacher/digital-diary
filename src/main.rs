@@ -99,11 +99,17 @@ fn main() {
 
             print!("{}", Cyan.paint("Content: "));
             stdout().flush().unwrap();
-            let mut content = String::new();
-            while let Ok(_) = stdin().read_line(&mut content) {
-                if content.ends_with("\r\n\r\n") || content.ends_with("\n\n") {
+            let mut raw_content = String::new();
+            while let Ok(_) = stdin().read_line(&mut raw_content) {
+                if raw_content.ends_with("\r\n\r\n") || raw_content.ends_with("\n\n") {
                     break;
                 }
+            }
+            let words = raw_content.trim().split_whitespace();
+            let mut content = String::with_capacity(raw_content.len());
+            for word in words {
+                content += word;
+                content += " ";
             }
 
             print!("{}", Cyan.paint("Keywords: "));
@@ -113,7 +119,7 @@ fn main() {
                 raw.trim().split_whitespace().map(|s| s.trim().to_lowercase()).collect()
             };
 
-            diary.add(keywords, title.trim().into(), content.trim().into());
+            diary.add(keywords, title.trim().into(), content);
         }
         ("list", Some(matches)) => {
             let mut diary = Diary::open();
