@@ -28,7 +28,7 @@ impl Diary {
             let p = PathBuf::from(a);
 
             if !p.exists() && expect_existence {
-                panic!("Error: database specified in DIDI_URL doesn't exist")
+                panic!("Error: database specified in DIDI_URL doesn't exist maybe use `didi create`")
             }
 
             return p;
@@ -89,6 +89,9 @@ impl Diary {
         url
     }
 
+    /// Adds an entry to the database
+    ///
+    /// `keywords` have to be lowercase
     pub fn add(&mut self, mut keywords: Vec<String>, title: String, content: String) {
         keywords.sort();
         keywords.dedup();
@@ -114,6 +117,7 @@ impl Diary {
         }
     }
 
+    /// Retrieves all entries from the database
     fn get_entries(&mut self) -> Vec<Entry> {
         let mut stmt = match self.connection.prepare("SELECT * FROM entries") {
             Ok(o) => o,
@@ -144,6 +148,9 @@ impl Diary {
         }).unwrap().map(|r| r.unwrap()).collect()
     }
 
+    /// Prints the given entries, which and what gets printed can be customised using the
+    /// parameters. If a parameter is `true` it will get printed. Hidden entries
+    /// will get printed if `hidden` is `true`.
     fn print_entries(entries: Vec<Entry>, date: bool, id: bool, hash: bool, keywords: bool,
                      content: bool, hidden: bool) {
         let mut counter = 0;
@@ -210,12 +217,18 @@ impl Diary {
         }
     }
 
+    /// Prints all entries, which and what gets printed can be customised using the
+    /// parameters.
     pub fn list_all(&mut self, date: bool, id: bool, hash: bool, keywords: bool, content: bool,
                     hidden: bool) {
         let entries = self.get_entries();
         Self::print_entries(entries, date, id, hash, keywords, content, hidden);
     }
 
+    /// Searches through all entries and prints the one that match the search terms,
+    /// which and what gets printed can be customised using the parameters.
+    /// `searchfor` contains the words to search for, from every entry the keywords and the title will
+    /// be searched. `searchfor` has to be lowercase.
     pub fn search(&mut self, searchfor: Vec<String>, date: bool, id: bool, hash: bool, keywords: bool,
                   content: bool, hidden: bool) {
         let entries = self.get_entries();
@@ -247,6 +260,8 @@ impl Diary {
         Self::print_entries(found, date, id, hash, keywords, content, hidden);
     }
 
+    /// Hides or unhides the entries given by `ids`.
+    /// The `set` parameter specifies if the entry should be hidden or not.
     pub fn hide(&mut self, ids: Vec<i64>, set: bool) {
         let mut counter = 0;
 
