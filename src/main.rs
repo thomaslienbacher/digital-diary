@@ -1,10 +1,12 @@
-mod diary;
+use std::io::{stdin, stdout, Write};
+
+use ansi_term::Color::*;
+use clap::{App, Arg};
+use text_io::*;
 
 use crate::diary::*;
-use clap::{Arg, App};
-use ansi_term::Color::*;
-use text_io::*;
-use std::io::{Write, stdout, stdin};
+
+mod diary;
 
 fn main() {
     #[cfg(windows)] {
@@ -44,8 +46,8 @@ fn main() {
         .multiple(true)
         .validator(|a| {
             match a.parse::<u64>() {
-                Err(_) => return Err(String::from("argument only accepts positive numbers (u64)")),
-                _ => return Ok(())
+                Err(_) => Err(String::from("argument only accepts positive numbers (u64)")),
+                _ => Ok(())
             }
         })
         .help("Ids of the entries to update");
@@ -100,12 +102,12 @@ fn main() {
             print!("{}", Cyan.paint("Content: "));
             stdout().flush().unwrap();
             let mut raw_content = String::new();
-            while let Ok(_) = stdin().read_line(&mut raw_content) {
+            while stdin().read_line(&mut raw_content).is_ok() {
                 if raw_content.ends_with("\r\n\r\n") || raw_content.ends_with("\n\n") {
                     break;
                 }
             }
-            let words = raw_content.trim().split_whitespace();
+            let words = raw_content.split_whitespace();
             let mut content = String::with_capacity(raw_content.len());
             for word in words {
                 content += word;
@@ -116,7 +118,7 @@ fn main() {
             stdout().flush().unwrap();
             let keywords = {
                 let raw: String = read!("{}\n");
-                raw.trim().split_whitespace().map(|s| s.trim().to_lowercase()).collect()
+                raw.split_whitespace().map(|s| s.trim().to_lowercase()).collect()
             };
 
             diary.add(keywords, title.trim().into(), content);

@@ -1,26 +1,25 @@
 [package]
 name = "digital-diary"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Thomas Lienbacher <lienbacher.tom@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [[bin]]
 name = "didi"
 path = "src/main.rs"
 
 [dependencies]
-clap = "2.33.0"
+clap = "2.33"
 ansi_term = "0.12"
-rusqlite = { version= "0.20", features = ["chrono"] }
+rusqlite = { version = "0.28", features = ["chrono"] }
 chrono = "0.4"
-sha2 = "0.8"
+sha2 = "0.10.6"
 dirs = "2.0"
-whoami = "0.6"
+whoami = "1.2.3"
 text_io = "0.1"
 hex = "0.4"
 termsize = "0.1"
 
 [profile.release]
 opt-level = 3
-codegen-units = 1
 lto = true

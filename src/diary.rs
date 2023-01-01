@@ -1,17 +1,18 @@
-use chrono::{DateTime, Local};
-use rusqlite::{Connection, OpenFlags, NO_PARAMS};
-use rusqlite::params;
 use std::path::PathBuf;
-use sha2::{Sha256, Digest};
+
 use ansi_term::Color::*;
-use whoami::username;
+use chrono::{DateTime, Local};
 use dirs::home_dir;
+use rusqlite::{Connection, OpenFlags};
+use rusqlite::params;
+use sha2::{Digest, Sha256};
+use whoami::username;
 
 #[derive(Clone, Debug)]
 pub struct Entry {
     id: i64,
     hash: Vec<u8>,
-    date: DateTime<chrono::Local>,
+    date: DateTime<Local>,
     keywords: Vec<String>,
     title: String,
     content: String,
@@ -31,7 +32,7 @@ impl Diary {
                 panic!("Error: database specified in DIDI_URL doesn't exist maybe use `didi create`")
             }
 
-            return p;
+            p
         } else {
             match home_dir() {
                 Some(mut d) => {
@@ -41,7 +42,7 @@ impl Diary {
                         panic!("Error: no database file found. Specify DIDI_URL or use `didi create`")
                     }
 
-                    return d;
+                    d
                 }
                 None => panic!("Error: couldn't retrieve home directory")
             }
@@ -69,7 +70,7 @@ impl Diary {
             Err(e) => panic!("Error: couldn't open database connection: {:?}", e)
         };
 
-        match connection.execute(
+        if let Err(e) = connection.execute(
             r#"create table entries
                 (
                     id       INTEGER not null,
@@ -81,9 +82,8 @@ impl Diary {
                     hidden   INTEGER not null,
                     primary key (id autoincrement),
                     unique (id)
-                );"#, NO_PARAMS) {
-            Err(e) => panic!("Error: couldn't create database tables: {:?}", e),
-            _ => {}
+                );"#, []) {
+            panic!("Error: couldn't create database tables: {:?}", e)
         }
 
         url
@@ -100,11 +100,11 @@ impl Diary {
 
         let hash: Vec<u8> = {
             let mut hasher = Sha256::new();
-            hasher.input(&keywords_str);
-            hasher.input(&title);
-            hasher.input(&content);
-            hasher.input(&now);
-            hasher.result().to_vec()
+            hasher.update(&keywords_str);
+            hasher.update(&title);
+            hasher.update(&content);
+            hasher.update(&now);
+            hasher.finalize().to_vec()
         };
 
         match self.connection.execute(
@@ -130,7 +130,7 @@ impl Diary {
             let date = row.get(2)?;
             let keywords: Vec<String> = {
                 let k: String = row.get(3)?;
-                k.split(";").map(|s| s.to_string()).collect()
+                k.split(';').map(|s| s.to_string()).collect()
             };
             let title = row.get(4)?;
             let content = row.get(5)?;
@@ -166,7 +166,7 @@ impl Diary {
                     print!("{:<40}", title);
 
                     if date {
-                        print!("{} ", Cyan.paint(format!("{}", e.date.to_rfc2822())));
+                        print!("{} ", Cyan.paint(e.date.to_rfc2822().to_string()));
                     }
 
                     if id {
